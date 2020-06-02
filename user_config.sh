@@ -1,1 +1,1 @@
-cp ./home/* ~
+cp -iprv home/ ~
