@@ -45,4 +45,4 @@ echo 'kern.vty=vt' >> /boot/loader.conf
 pkg install -y i3-gaps i3blocks i3lock i3status conky dmenu
 
 ### Install Software
-pkg install -y chromium git gnome-screenshot luit nitrogen vscode xterm
+pkg install -y chromium git gnome-screenshot nitrogen vscode sakura

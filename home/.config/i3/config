@@ -1,10 +1,6 @@
 # i3 config file (v4)
 
-# I prefer to use the Win key as the mod key.
-# Arch Linux.
-#set $mod Mod4
-# FreeBSD.
-set $mod Mod1
+set $mod Mod4
 
 # Default font for i3.
 font pango:DejaVu Sans Mono 8
@@ -108,12 +104,12 @@ bindsym $mod+d exec dmenu_run
 #bindsym $mod+d exec "rofi -combi-modi window,drun -show combi -modi combi"
 
 # Key combination for some of my favorite applications.
-bindsym $mod+Return exec "xterm"
-bindsym $mod+Shift+m exec "claws-mail"
-bindsym $mod+Shift+g exec "gimp"
-bindsym $mod+Shift+f exec "firefox"
-bindsym $mod+Shift+t exec "hexchat"
-bindsym $mod+Shift+z exec "filezilla"
+bindsym $mod+Return exec "sakura"
+#bindsym $mod+Shift+m exec "claws-mail"
+#bindsym $mod+Shift+g exec "gimp"
+bindsym $mod+Shift+f exec "chromium"
+#bindsym $mod+Shift+t exec "hexchat"
+#bindsym $mod+Shift+z exec "filezilla"
 
 # Map the print key to gnome-screenshot.
 bindsym Print exec "gnome-screenshot -i"
