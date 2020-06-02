@@ -31,7 +31,7 @@ sysrc kld_list="/boot/modules/i915kms.ko"
 sysrc firewall_enable="YES"
 sysrc firewall_type="workstation"
 sysrc firewall_allowservices="any"
-sysrc firewall_myservices="22 80"
+sysrc firewall_myservices="22/tcp 80/tcp"
 service ipfw start
 
 ### Automount
