@@ -38,11 +38,8 @@ service ipfw start
 
 
 ### Install and configure Xorg, Slim, and i3
-pkg install -y xorg
+pkg install -y xorg xf86-video-intel
 echo 'kern.vty=vt' >> /boot/loader.conf
 
-### Install and configure i3
-pkg install -y i3-gaps i3blocks i3lock i3status conky dmenu
-
-### Install Software
-pkg install -y chromium git gnome-screenshot nitrogen vscode sakura vim
+### Install DE and Programs
+pkg install -y i3-gaps i3blocks i3lock i3status dmenu  chromium git gnome-screenshot nitrogen vscode sakura vim
