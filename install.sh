@@ -33,7 +33,10 @@ network={
 EOL
 
 ### Update FreeBSD
-freebsd-update fetch install
+freebsd-update fetch install --not-running-from-cron
+echo 'root: robb' >> /etc/aliases
+newaliases
+echo "@daily                                  root    freebsd-update cron" >> /etc/crontab
 
 ### Bootstrap pkg
 sed -i '' "s/quarterly/latest/g" /etc/pkg/FreeBSD.conf
@@ -42,13 +45,27 @@ pkg update
 ### Install Intel graphics
 pkg install -y graphics/drm-kmod
 sysrc kld_list="/boot/modules/i915kms.ko"
+pw group mod video -m robb
+
+### Setup Linux Compatibility
+kldload linux64
+pkg install -y emulators/linux_base-c7
+sysrc linux_enable="YES"
+sysrc fdescfs_load="YES"
+echo 'linprocfs   /compat/linux/proc  linprocfs       rw      0       0' >> /etc/fstab
+echo 'linsysfs    /compat/linux/sys   linsysfs        rw      0       0' >> /etc/fstab
+echo 'tmpfs    /compat/linux/dev/shm  tmpfs   rw,mode=1777    0       0' >> /etc/fstab
+echo 'fdescfs /dev/fd  fdescfs  rw  0  0' >> /etc/fstab
+mount -a
 
 ### Install Gnome
 pkg install -y \
     deskutils/gnome-shell-extra-extensions \
     x11/gnome3 \
     x11-drivers/xf86-video-intel \
-    x11/xorg-minimal
+    x11/xorg-minimal \
+    x11-fonts/powerline-fonts
+
 echo 'kern.vty=vt' >> /boot/loader.conf
 echo 'hw.psm.synaptics_support="1"' >> /boot/loader.conf
 sysrc dbus_enable="YES"
@@ -62,23 +79,19 @@ sysrc firewall_type="workstation"
 sysrc firewall_allowservices="any"
 sysrc firewall_myservices="22/tcp 80/tcp"
 
-### Setup Linux Compatibility
-pkg install -y emulators/linux_base-c7
-sysrc linux_enable="YES"
-sysrc fdescfs_load="YES"
-kldload linux64
-echo 'linprocfs   /compat/linux/proc  linprocfs       rw      0       0' >> /etc/fstab
-echo 'linsysfs    /compat/linux/sys   linsysfs        rw      0       0' >> /etc/fstab
-echo 'tmpfs    /compat/linux/dev/shm  tmpfs   rw,mode=1777    0       0' >> /etc/fstab
-echo 'fdescfs /dev/fd  fdescfs  rw  0  0' >> /etc/fstab
-mount -a
+### Setup sudo
+pkg install -y security/sudo
+echo 'robb ALL=(ALL) NOPASSWD: ALL' >> /usr/local/etc/sudoers
+
+### Install additional shells
+pkg install -y shells/bash shells/fish
+chsh -s /usr/local/bin/fish robb
 
 ### Install software (pkg prime-origins)
 pkg install -y \
     devel/autoconf \
     devel/automake \
     sysutils/automount \
-    shells/bash \
     devel/bison \
     devel/geany \
     devel/geany-plugin-spellcheck \
@@ -91,15 +104,6 @@ pkg install -y \
     www/iridium \
     editors/libreoffice \
     devel/libtool \
-    security/sudo \
     editors/vim \
-    editors/vscode \
-    net-mgmt/wifimgr
-
-# Update robb's user
-pw group mod wheel -m robb
-pw group mod video -m robb
-pw group mod operator -m robb
-
-chsh -s /usr/local/bin/bash robb
-echo 'robb ALL=(ALL) NOPASSWD: ALL' >> /usr/local/etc/sudoers
+    net-mgmt/wifimgr \
+    sysutils/cdrtools
