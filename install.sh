@@ -1,3 +1,14 @@
+#!/bin/sh
+
+### Checks if running as root
+if [ $(id -u) -ne 0 ]; then
+   echo "This script must be run as root"
+   exit;
+fi
+
+### Takes a username
+username=$1
+
 ### Update generic /boot/loader.conf settings
 sysrc -f /boot/loader.conf loader_logo="beastie"
 sysrc -f /boot/loader.conf autoboot_delay=2
@@ -20,6 +31,10 @@ sysrc allscreens_kbdflags="-b quiet.off"
 kbdcontrol -b off
 
 ### Setup Wifi
+echo "Enter Wireless SSID:"
+read ssid
+echo "Enter Wireless PSK:"
+read psk
 sysrc -f /boot/loader.conf if_rtwn_pci_load="YES"
 echo 'legal.realtek.license_ack=1' >> /boot/loader.conf
 sysrc wlans_rtwn0="wlan0"
@@ -27,14 +42,14 @@ sysrc ifconfig_wlan0="WPA SYNCDHCP"
 touch /etc/wpa_supplicant.conf
 cat > /etc/wpa_supplicant.conf <<EOL
 network={
-    ssid="R-Link"
-    psk="TheRandall'sPassw0rd!0"
+    ssid="${ssid}"
+    psk="${psk}"
 }
 EOL
 
 ### Update FreeBSD
 freebsd-update fetch install --not-running-from-cron
-echo 'root: robb' >> /etc/aliases
+echo 'root: ${username}' >> /etc/aliases
 newaliases
 echo "@daily                                  root    freebsd-update cron" >> /etc/crontab
 
@@ -45,7 +60,7 @@ pkg update
 ### Install Intel graphics
 pkg install -y graphics/drm-kmod
 sysrc kld_list="/boot/modules/i915kms.ko"
-pw group mod video -m robb
+pw group mod video -m $username
 
 ### Setup Linux Compatibility
 kldload linux64
@@ -81,11 +96,11 @@ sysrc firewall_myservices="22/tcp 80/tcp"
 
 ### Setup sudo
 pkg install -y security/sudo
-echo 'robb ALL=(ALL) NOPASSWD: ALL' >> /usr/local/etc/sudoers
+echo '${username} ALL=(ALL) NOPASSWD: ALL' >> /usr/local/etc/sudoers
 
 ### Install additional shells
 pkg install -y shells/bash shells/fish
-chsh -s /usr/local/bin/fish robb
+chsh -s /usr/local/bin/fish $username
 
 ### Install software (pkg prime-origins)
 pkg install -y \
