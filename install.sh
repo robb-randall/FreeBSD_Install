@@ -3,10 +3,14 @@
 ### Checks if running as root
 if [ $(id -u) -ne 0 ]; then
    echo "This script must be run as root"
-   exit;
+   exit 1;
 fi
 
 ### Takes a username
+if [ "$#" -ne 1 ]; then
+  echo "Usage ${0} <username>" >&2
+  exit 1
+fi
 username=$1
 
 ### Update generic /boot/loader.conf settings
@@ -73,6 +77,14 @@ echo 'tmpfs    /compat/linux/dev/shm  tmpfs   rw,mode=1777    0       0' >> /etc
 echo 'fdescfs /dev/fd  fdescfs  rw  0  0' >> /etc/fstab
 mount -a
 
+### Filesystem
+pkg install -y \
+    sysutils/automount \
+    emulators/fuse \
+    sysutils/fusefs-ntfs \
+    sysutils/fusefs-ext2
+sysrc -f /boot/loader.conf fuse_load="YES"
+
 ### Install Gnome
 pkg install -y \
     deskutils/gnome-shell-extra-extensions \
@@ -106,7 +118,6 @@ chsh -s /usr/local/bin/fish $username
 pkg install -y \
     devel/autoconf \
     devel/automake \
-    sysutils/automount \
     devel/bison \
     devel/geany \
     devel/geany-plugin-spellcheck \
@@ -116,9 +127,11 @@ pkg install -y \
     devel/geany-themes \
     devel/gettext-tools \
     devel/git \
+    lang/go \
     www/iridium \
     editors/libreoffice \
     devel/libtool \
     editors/vim \
     net-mgmt/wifimgr \
-    sysutils/cdrtools
+    sysutils/cdrtools \
+    sysutils/neofetch
