@@ -34,6 +34,11 @@ sysrc dumpdev="NO"
 sysrc allscreens_kbdflags="-b quiet.off"
 kbdcontrol -b off
 
+### Set chron email
+echo "Enter email address for cron:"
+read cron_email
+sysrc -f cron_flags="-m ${cron_email}"
+
 ### Setup Wifi
 echo "Enter Wireless SSID:"
 read ssid
