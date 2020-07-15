@@ -133,7 +133,6 @@ pkg install -y \
     x11-fonts/powerline-fonts
 
 sysrc dbus_enable="YES"
-sysrc hald_enable="YES"
 sysrc gdm_enable="YES"
 sysrc gnome_enable="YES"
 
