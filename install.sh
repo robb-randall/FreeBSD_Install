@@ -24,10 +24,10 @@ echo 'kern.vty=vt' >> /boot/loader.conf
 ### Tunables
 echo 'kern.sched.preempt_thresh=224' >> /etc/sysctl.conf
 echo 'kern.maxfiles=200000' >> /etc/sysctl.conf
-echo 'kern.ipc.shmseg=1024' >> /etc/sysctl.conf
-echo 'kern.ipc.shmmni=1024' >> /etc/sysctl.conf
-echo 'kern.maxproc=100000' >> /etc/sysctl.conf
 echo 'vfs.usermount=1' >> /etc/sysctl.conf
+echo 'kern.maxproc=100000' >> /boot/loader.conf
+echo 'kern.ipc.shmseg=1024' >> /boot/loader.conf
+echo 'kern.ipc.shmmni=1024' >> /boot/loader.conf
 
 ### Update generic /etc/rc.conf settings
 sysrc clear_tmp_enable="YES"
@@ -83,7 +83,7 @@ sysrc kld_list="/boot/modules/i915kms.ko"
 echo 'compat.linuxkpi.i915_disable_power_well="0"' >> /boot/loader.conf
 pw group mod video -m $username
 
-pkg install -y intel-backlight
+pkg install -y graphics/intel-backlight
 echo 'acpi_video_load="YES"' >> /boot/loader.conf
 cp /usr/local/share/examples/intel-backlight/acpi-video-intel-backlight.conf \
     /usr/local/etc/devd/
@@ -97,7 +97,7 @@ cp /usr/local/share/X11/xorg.conf.d/40-libinput.conf \
     /usr/local/etc/X11/xorg.conf.d/
 
 ### Install CPU microcode patches
-pkg install -y devcpu-data
+pkg install -y sysutils/devcpu-data
 echo 'cpu_microcode_load="YES"' >> /boot/loader.conf
 echo 'cpu_microcode_name="/boot/firmware/intel-ucode.bin"' >> /boot/loader.conf
 
@@ -114,7 +114,7 @@ echo 'snd_driver_load="YES"' >> /boot/loader.conf
 echo 'hw.snd.default_auto=1' >> /etc/sysctl.conf
 
 ### Printing
-pkg install -y cups
+pkg install -y print/cups
 sysrc cupsd_enable="YES"
 pw groupmod cups -m $username
 service cupsd start
@@ -137,20 +137,20 @@ pkg install -y \
     emulators/fuse \
     sysutils/fusefs-ntfs \
     sysutils/fusefs-ext2
-sysrc -f /boot/loader.conf fuse_load="YES"
+echo 'fuse_load="YES"' >> /boot/loader.conf
 
 ### Setup sudo
 pkg install -y security/sudo
-echo '${username} ALL=(ALL) NOPASSWD: ALL' >> /usr/local/etc/sudoers
 pw groupmod wheel -m $username
 
 ### Install Gnome
 pkg install -y \
     deskutils/gnome-shell-extra-extensions \
-    x11/gnome3-lite \
+    x11/gnome3 \
     x11-drivers/xf86-video-intel \
     x11/xorg-minimal \
-    x11-fonts/powerline-fonts
+    x11-fonts/powerline-fonts \
+    x11/xterm
 
 sysrc dbus_enable="YES"
 sysrc gdm_enable="YES"
