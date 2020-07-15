@@ -21,10 +21,17 @@ echo 'hw.usb.no_boot_wait="1"' >> /boot/loader.conf
 
 echo 'kern.vty=vt' >> /boot/loader.conf
 
+### Tunables
+echo 'kern.sched.preempt_thresh=224' >> /etc/sysctl.conf
+echo 'kern.maxfiles=200000' >> /etc/sysctl.conf
+echo 'kern.ipc.shmseg=1024' >> /etc/sysctl.conf
+echo 'kern.ipc.shmmni=1024' >> /etc/sysctl.conf
+echo 'kern.maxproc=100000' >> /etc/sysctl.conf
+echo 'vfs.usermount=1' >> /etc/sysctl.conf
+
 ### Update generic /etc/rc.conf settings
 sysrc clear_tmp_enable="YES"
 sysrc sshd_enable="YES"
-sysrc moused_enable="YES"
 sysrc ntpd_enable="YES"
 sysrc powerd_enable="YES"
 sysrc dumpdev="NO"
@@ -37,7 +44,7 @@ kbdcontrol -b off
 ### Set chron email
 echo "Enter email address for cron:"
 read cron_email
-sysrc -f cron_flags="-m ${cron_email}"
+sysrc cron_flags="-m ${cron_email}"
 
 ### Setup Wifi
 echo "Enter Wireless SSID:"
@@ -46,6 +53,8 @@ echo "Enter Wireless PSK:"
 read psk
 echo 'if_rtwn_pci_load="YES"' >> /boot/loader.conf
 echo 'legal.realtek.license_ack=1' >> /boot/loader.conf
+sysrc background_dhclient="YES"
+sysrc ifconfig_alc0="DHCP"
 sysrc wlans_rtwn0="wlan0"
 sysrc ifconfig_wlan0="WPA SYNCDHCP"
 sysrc cloned_interfaces="lagg0"
@@ -70,11 +79,11 @@ pkg update
 
 ### Install and configure graphics
 pkg install -y graphics/drm-kmod
-sysrc kld_list+="/boot/modules/i915kms.ko"
+sysrc kld_list="/boot/modules/i915kms.ko"
 echo 'compat.linuxkpi.i915_disable_power_well="0"' >> /boot/loader.conf
 pw group mod video -m $username
 
-pkg install intel-backlight
+pkg install -y intel-backlight
 echo 'acpi_video_load="YES"' >> /boot/loader.conf
 cp /usr/local/share/examples/intel-backlight/acpi-video-intel-backlight.conf \
     /usr/local/etc/devd/
@@ -100,14 +109,20 @@ pw groupmod webcamd -m $username
 ### Touchpad
 echo 'hw.psm.synaptics_support="1"' >> /boot/loader.conf
 
+### Sound
+echo 'snd_driver_load="YES"' >> /boot/loader.conf
+echo 'hw.snd.default_auto=1' >> /etc/sysctl.conf
+
 ### Printing
 pkg install -y cups
 sysrc cupsd_enable="YES"
+pw groupmod cups -m $username
 service cupsd start
 
 ### Setup Linux Compatibility
 sysrc linux_enable="YES"
 sysrc fdescfs_load="YES"
+echo 'tmpfs_load="YES"' >> /boot/loader.conf
 kldload linux64
 pkg install -y emulators/linux_base-c7
 echo 'linprocfs   /compat/linux/proc  linprocfs       rw      0       0' >> /etc/fstab
