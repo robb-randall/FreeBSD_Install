@@ -34,6 +34,11 @@ echo 'kern.vt.enable_bell=0' >> /etc/sysctl.conf
 sysrc allscreens_kbdflags="-b quiet.off"
 kbdcontrol -b off
 
+### Set chron email
+echo "Enter email address for cron:"
+read cron_email
+sysrc -f cron_flags="-m ${cron_email}"
+
 ### Setup Wifi
 echo "Enter Wireless SSID:"
 read ssid
