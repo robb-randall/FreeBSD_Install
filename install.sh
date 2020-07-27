@@ -63,7 +63,7 @@ read psk
 echo 'if_rtwn_pci_load="YES"' >> /boot/loader.conf
 echo 'legal.realtek.license_ack=1' >> /boot/loader.conf
 sysrc wlans_rtwn0="wlan0"
-sysrc ifconfig_wlan0="WPA SYNCDHCP"
+sysrc ifconfig_wlan0="WPA"
 touch /etc/wpa_supplicant.conf
 cat > /etc/wpa_supplicant.conf <<EOL
 network={
