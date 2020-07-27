@@ -13,6 +13,13 @@ if [ "$#" -ne 1 ]; then
 fi
 username=$1
 
+### Backup configs
+cp /boot/loader.conf /boot/loader.conf.original
+cp /etc/pkg/FreeBSD.conf /etc/pkg/FreeBSD.conf.original
+cp /etc/fstab /etc/fstab.original
+cp /etc/rc.conf /etc/rc.conf.original
+cp /etc/sysctl.conf /etc/sysctl.conf.original
+
 ### Boot settings
 echo 'loader_logo="beastie"' >> /boot/loader.conf
 echo 'loader_delay=2' >> /boot/loader.conf
@@ -20,6 +27,8 @@ echo 'autoboot_delay="0"' >> /boot/loader.conf
 echo 'hw.usb.no_boot_wait="1"' >> /boot/loader.conf
 
 echo 'kern.vty=vt' >> /boot/loader.conf
+echo 'hw.vga.textmode=1' >> /boot/loader.conf
+echo 'i915kms_load="YES"' >> /boot/loader.conf
 
 ### Tunables
 echo 'kern.sched.preempt_thresh=224' >> /etc/sysctl.conf
@@ -29,36 +38,32 @@ echo 'kern.maxproc=100000' >> /boot/loader.conf
 echo 'kern.ipc.shmseg=1024' >> /boot/loader.conf
 echo 'kern.ipc.shmmni=1024' >> /boot/loader.conf
 
-### Update generic /etc/rc.conf settings
+### Hardening settings
 sysrc clear_tmp_enable="YES"
+sysrc dumpdev="NO"
+
+### Basic services
 sysrc sshd_enable="YES"
 sysrc ntpd_enable="YES"
 sysrc powerd_enable="YES"
-sysrc dumpdev="NO"
+sysrc background_dhclient="YES"
+sysrc dbus_enable="YES"
+sysrc moused_enable="YES"
 
 ### Disable beeps
 echo 'kern.vt.enable_bell=0' >> /etc/sysctl.conf
 sysrc allscreens_kbdflags="-b quiet.off"
 kbdcontrol -b off
 
-### Set chron email
-echo "Enter email address for cron:"
-read cron_email
-sysrc cron_flags="-m ${cron_email}"
-
-### Setup Wifi
+### Setup Wireless interface
 echo "Enter Wireless SSID:"
 read ssid
 echo "Enter Wireless PSK:"
 read psk
 echo 'if_rtwn_pci_load="YES"' >> /boot/loader.conf
 echo 'legal.realtek.license_ack=1' >> /boot/loader.conf
-sysrc background_dhclient="YES"
-sysrc ifconfig_alc0="DHCP"
 sysrc wlans_rtwn0="wlan0"
 sysrc ifconfig_wlan0="WPA SYNCDHCP"
-sysrc cloned_interfaces="lagg0"
-sysrc ifconfig_lagg0="laggproto failover laggport alc0 laggport wlan0 DHCP"
 touch /etc/wpa_supplicant.conf
 cat > /etc/wpa_supplicant.conf <<EOL
 network={
@@ -67,15 +72,40 @@ network={
 }
 EOL
 
+### Setup Ethernet interface
+sysrc ifconfig_alc0="DHCP"
+
+### Setup Lagg interface
+sysrc cloned_interfaces="lagg0"
+ifconfig_alc0="ether 74:de:2b:6d:63:87"
+sysrc ifconfig_lagg0="laggproto failover laggport alc0 laggport wlan0 DHCP"
+
 ### Update FreeBSD
 freebsd-update fetch install --not-running-from-cron
-echo 'root: ${username}' >> /etc/aliases
-newaliases
-echo "@daily                                  root    freebsd-update cron" >> /etc/crontab
 
 ### Bootstrap pkg
 sed -i '' "s/quarterly/latest/g" /etc/pkg/FreeBSD.conf
 pkg update
+
+### Setup Linux Compatibility
+sysrc linux_enable="YES"
+sysrc fdescfs_load="YES"
+echo 'tmpfs_load="YES"' >> /boot/loader.conf
+kldload linux64
+pkg install -y emulators/linux_base-c7
+echo 'linprocfs   /compat/linux/proc  linprocfs       rw      0       0' >> /etc/fstab
+echo 'linsysfs    /compat/linux/sys   linsysfs        rw      0       0' >> /etc/fstab
+echo 'tmpfs    /compat/linux/dev/shm  tmpfs   rw,mode=1777    0       0' >> /etc/fstab
+echo 'fdescfs /dev/fd  fdescfs  rw  0  0' >> /etc/fstab
+mount -a
+
+### Filesystem
+pkg install -y \
+    sysutils/automount \
+    emulators/fuse \
+    sysutils/fusefs-ntfs \
+    sysutils/fusefs-ext2
+echo 'fuse_load="YES"' >> /boot/loader.conf
 
 ### Install and configure graphics
 pkg install -y graphics/drm-kmod
@@ -87,8 +117,6 @@ pkg install -y graphics/intel-backlight
 echo 'acpi_video_load="YES"' >> /boot/loader.conf
 cp /usr/local/share/examples/intel-backlight/acpi-video-intel-backlight.conf \
     /usr/local/etc/devd/
-
-pw groupmod video -m $username
 
 ### Install iichid
 pkg install -y sysutils/iichid
@@ -119,26 +147,6 @@ sysrc cupsd_enable="YES"
 pw groupmod cups -m $username
 service cupsd start
 
-### Setup Linux Compatibility
-sysrc linux_enable="YES"
-sysrc fdescfs_load="YES"
-echo 'tmpfs_load="YES"' >> /boot/loader.conf
-kldload linux64
-pkg install -y emulators/linux_base-c7
-echo 'linprocfs   /compat/linux/proc  linprocfs       rw      0       0' >> /etc/fstab
-echo 'linsysfs    /compat/linux/sys   linsysfs        rw      0       0' >> /etc/fstab
-echo 'tmpfs    /compat/linux/dev/shm  tmpfs   rw,mode=1777    0       0' >> /etc/fstab
-echo 'fdescfs /dev/fd  fdescfs  rw  0  0' >> /etc/fstab
-mount -a
-
-### Filesystem
-pkg install -y \
-    sysutils/automount \
-    emulators/fuse \
-    sysutils/fusefs-ntfs \
-    sysutils/fusefs-ext2
-echo 'fuse_load="YES"' >> /boot/loader.conf
-
 ### Setup sudo
 pkg install -y security/sudo
 pw groupmod wheel -m $username
@@ -152,7 +160,6 @@ pkg install -y \
     x11-fonts/powerline-fonts \
     x11/xterm
 
-sysrc dbus_enable="YES"
 sysrc gdm_enable="YES"
 sysrc gnome_enable="YES"
 
@@ -163,6 +170,7 @@ sysrc firewall_allowservices="any"
 sysrc firewall_myservices="22/tcp 80/tcp"
 
 ### Setup Firewall PF
+#touch /etc/pf.conf
 #echo "block in all" > /etc/pf.conf
 #echo "set skip on lo0" >> /etc/pf.conf
 #echo "pass out all keep state" >> /etc/pf.conf
@@ -182,3 +190,11 @@ pkg install -y \
     net-mgmt/wifimgr \
     sysutils/cdrtools \
     sysutils/neofetch
+
+### Post install backup
+cp /boot/loader.conf /boot/loader.conf.initial
+cp /etc/pkg/FreeBSD.conf /etc/pkg/FreeBSD.conf.initial
+cp /etc/fstab /etc/fstab.initial
+cp /etc/rc.conf /etc/rc.conf.initial
+cp /etc/sysctl.conf /etc/sysctl.conf.initial
+cp /etc/wpa_supplicant.conf /etc/wpa_supplicant.conf.initial
