@@ -63,7 +63,7 @@ read psk
 echo 'if_rtwn_pci_load="YES"' >> /boot/loader.conf
 echo 'legal.realtek.license_ack=1' >> /boot/loader.conf
 sysrc wlans_rtwn0="wlan0"
-sysrc ifconfig_wlan0="WPA"
+sysrc ifconfig_wlan0="WPA up"
 touch /etc/wpa_supplicant.conf
 cat > /etc/wpa_supplicant.conf <<EOL
 network={
@@ -73,12 +73,12 @@ network={
 EOL
 
 ### Setup Ethernet interface
-sysrc ifconfig_alc0="DHCP"
+sysrc ifconfig_alc0="ether 74:de:2b:6d:63:87 up"
 
 ### Setup Lagg interface
 sysrc cloned_interfaces="lagg0"
 ifconfig_alc0="ether 74:de:2b:6d:63:87"
-sysrc ifconfig_lagg0="laggproto failover laggport alc0 laggport wlan0 DHCP"
+sysrc ifconfig_lagg0="laggproto failover laggport alc0 laggport wlan0 DHCP up"
 
 ### Update FreeBSD
 freebsd-update fetch install --not-running-from-cron
